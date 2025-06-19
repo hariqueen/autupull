@@ -1,0 +1,23 @@
+# CSS Selector로 진행 필요
+# SK일렉링크 / call
+
+
+company_name
+"W컨셉"
+
+company_name
+"디싸이더스/애드프로젝트"
+
+company_name
+"매스프레소(콴다)"
+
+company_name
+"볼드워크"
+
+company_name
+"앤하우스"
+
+
+<span id="uxtagfield-2171-selectedText" data-ref="selectedText" aria-hidden="true" class="x-hidden-clip">No value selected.</span>
+<ul id="uxtagfield-2171-ariaList" data-ref="ariaList" role="listbox" aria-label="Selected values" aria-multiselectable="true" class="x-tagfield-arialist"></ul>
+<ul id="uxtagfield-2171-itemList" data-ref="itemList" role="presentation" class="x-tagfield-list"><li data-selectionindex="0" data-recordid="27565" role="presentation" class="x-tagfield-item"><div role="presentation" class="x-tagfield-item-text">아웃바운드</div><div role="presentation" class="x-tagfield-item-close"></div></li><li id="uxtagfield-2171-inputElCt" data-ref="inputElCt" role="presentation" class="x-tagfield-input"><input id="uxtagfield-2171-inputEl" data-ref="inputEl" type="text" name="call_type" aria-invalid="false" aria-readonly="false" aria-describedby="uxtagfield-2171-selectedText uxtagfield-2171-ariaStatusEl uxtagfield-2171-ariaHelpEl" aria-required="false" role="textbox" class="x-tagfield-input-field " autocomplete="off" data-componentid="uxtagfield-2171"></li></ul>
