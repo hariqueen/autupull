@@ -47,26 +47,34 @@ class LoginManager:
             # 로그인 버튼 클릭
             login_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, config['login_btn'])))
             login_button.click()
+            time.sleep(2)  # 로그인 처리 대기
             
-            time.sleep(2)
+            # 로그인 직후 알림창 처리
+            try:
+                alert_ok_button = WebDriverWait(driver, 3).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#ax5-dialog-29 > div.ax-dialog-body > div.ax-dialog-buttons > div > button"))
+                )
+                alert_ok_button.click()
+                print("✅ 로그인 후 알림창 닫기 완료")
+                time.sleep(1)
+            except:
+                print("✅ 로그인 후 알림창 없음")  # 알림창이 없는 경우 (정상적인 상황)
+                pass
             
-            # 세션 유지 여부에 따른 처리
             if keep_session:
-                session_key = f"{company_name}_{account_type}"
-                self.active_sessions[session_key] = {
+                print(f"{company_name} ({account_type.upper()}) 로그인 성공 (세션 유지)")
+                self.active_sessions[f"{company_name}_{account_type}"] = {
                     'driver': driver,
-                    'account_data': account_data,
-                    'login_time': time.time()
+                    'account_data': account_data
                 }
-                print(f"✅ {company_name} 로그인 성공 (세션 유지)")
                 return True, driver
             else:
+                print(f"{company_name} ({account_type.upper()}) 로그인 성공")
                 driver.quit()
-                print(f"✅ {company_name} 로그인 성공")
                 return True, None
                 
         except Exception as e:
-            print(f"{company_name} 로그인 실패: {str(e)}")
+            print(f"{company_name} ({account_type.upper()}) 로그인 실패: {e}")
             driver.quit()
             return False, None
     

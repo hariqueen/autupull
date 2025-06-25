@@ -30,8 +30,11 @@ class DatabaseManager:
             docs = self.db.collection("accounts").where("company_name", "==", company).where("account_type", "==", account_type).get()
             if docs:
                 account = docs[0].to_dict()
-                account['config'] = config_map.get(company)
-                accounts.append(account)
-                print(f"✅ {company} {account_type.upper()} 계정 로드")
+                if account is not None:
+                    account['config'] = config_map.get(company)
+                    accounts.append(account)
+                    print(f"✅ {company} {account_type.upper()} 계정 로드")
+                else:
+                    print(f"⚠️ {company} {account_type.upper()} 계정 데이터가 없습니다.")
         
         return accounts

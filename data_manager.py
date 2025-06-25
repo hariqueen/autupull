@@ -100,6 +100,19 @@ class DataManager:
         print(f"{company_name} 데이터 수집 완료")
         return True
     
+    def _handle_no_data_alert(self, driver, wait):
+        """데이터 없음 알림창 처리 (일반 사이트용)"""
+        try:
+            alert = wait.until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "#ax5-dialog-29 .ax-dialog-msg"))
+            )
+            if "검색된 데이터가 없습니다" in alert.text:
+                print("검색된 데이터가 없습니다. 다음 단계로 진행.")
+                return True
+        except Exception:
+            pass
+        return False
+
     def download_sms_data(self, company_name, start_date=None, end_date=None):
         """SMS 데이터 다운로드"""
         session = self.login_manager.get_active_session(company_name, "sms")
@@ -119,11 +132,7 @@ class DataManager:
             return False
         
         # 알람창 닫기 (있는 경우만)
-        try:
-            WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#ax5-dialog-29 > div.ax-dialog-body > div.ax-dialog-buttons > div > button"))).click()
-            time.sleep(1)
-        except:
-            pass
+        self._handle_no_data_alert(driver, wait)
         
         def click_menu_chain():
             """메뉴 클릭 체인 (iframe 초기화용)"""
@@ -160,19 +169,10 @@ class DataManager:
                 print(f"❌ 브랜드 선택 팝업용 iframe이 없음 (현재 {len(iframes)}개)")
 
             # 각 브랜드별로 처리
-            for brand in config['brands']:
+            for brand_index, brand in enumerate(config['brands']):
+                is_last_brand = brand_index == len(config['brands']) - 1
                 print(f"🔍 {brand} 브랜드 처리 시작")
                 try:
-                    # 메뉴 재클릭으로 iframe 초기화
-                    click_menu_chain()
-                    time.sleep(2)  # 추가 대기
-                    
-                    # 페이지 로딩 대기
-                    print("⏳ 페이지 로딩 대기 중...")
-                    WebDriverWait(driver, 30).until(
-                        lambda d: d.execute_script("return document.readyState") == "complete"
-                    )
-                    
                     # iframe 전환
                     iframes = driver.find_elements(By.TAG_NAME, "iframe")
                     if len(iframes) <= 1:
@@ -189,53 +189,41 @@ class DataManager:
                     print("✅ 브랜드 드롭다운 클릭")
                     time.sleep(1)
                     
-                    # 브랜드명 입력하여 검색
-                    active = driver.switch_to.active_element
-                    active.clear()
-                    active.send_keys(brand)
-                    time.sleep(1)
-                    
-                    # 검색된 브랜드 클릭
-                    brand_option = wait.until(EC.element_to_be_clickable(
-                        (By.XPATH, f"//span[normalize-space(text())='{brand}']")
-                    ))
-                    brand_option.click()
-                    time.sleep(1)
-                    
-                    # 선택된 브랜드 확인
-                    selected_brand = dropdown.get_attribute('value')
-                    if brand not in selected_brand:
-                        print(f"❌ 잘못된 브랜드가 선택됨: 의도={brand}, 실제={selected_brand}")
-                        raise ValueError("잘못된 브랜드 선택")
-                    print(f"✅ {brand} 브랜드 선택 완료")
+                    # 브랜드 선택 (down 키 사용)
+                    self._select_brand(driver, brand, wait, brand_index)
                     
                     # SMS 데이터 처리
-                    self._process_sms_data(driver, config, start_date, end_date, brand)
+                    result = self._process_sms_data(driver, config, start_date, end_date, brand, is_last_brand)
                     
-                    # X버튼으로 브랜드 초기화
-                    try:
-                        x_btn = driver.find_element(By.CSS_SELECTOR, 'div[data-ax5autocomplete-remove="true"]')
-                        x_btn.click()
-                        print("✅ 브랜드 삭제 (X버튼 클릭)")
-                        time.sleep(1)
-                    except Exception as e:
-                        print(f"❌ X버튼 클릭 실패: {e}")
-                        # X버튼 실패 시 메뉴 재클릭으로 초기화
+                    # 마지막 브랜드이고 데이터가 없으면 바로 종료
+                    if is_last_brand and not result:
+                        print(f"마지막 브랜드 {brand}에서 데이터 없음 - 종료")
                         driver.switch_to.default_content()
-                        click_menu_chain()
-                        time.sleep(2)
+                        return True
                     
+                    # 다음 브랜드를 위해 X버튼 클릭으로 브랜드 초기화
+                    if not is_last_brand:  # 마지막 브랜드가 아닌 경우만
+                        x_button = driver.find_element(By.CSS_SELECTOR, 'div[data-ax5autocomplete-remove="true"]')
+                        driver.execute_script("arguments[0].click();", x_button)
+                        print("✅ X버튼 클릭 완료 (JavaScript)")
+                        time.sleep(1)
+                    
+                    # iframe에서 나가기
                     driver.switch_to.default_content()
                     print(f"🎉 {brand} 브랜드 처리 완료")
                     
                 except Exception as e:
                     print(f"❌ {brand} 브랜드 처리 중 예외 발생: {e}")
                     driver.switch_to.default_content()
-                    # 실패 시 메뉴 재클릭
-                    click_menu_chain()
-                    continue
+                    if not is_last_brand:  # 마지막 브랜드가 아닐 때만 재시도
+                        # 실패 시 메뉴 재클릭
+                        click_menu_chain()
+                        continue
+                    else:
+                        print(f"마지막 브랜드 {brand}에서 오류 발생 - 종료")
+                        return True
                 
-                time.sleep(2)  # 브랜드 간 간격
+                time.sleep(2)
         
         else:
             # 브랜드 선택이 필요없는 일반 회사들
@@ -269,19 +257,20 @@ class DataManager:
         time.sleep(1)
         return element
 
-    def _select_brand(self, driver, brand, wait):
+    def _select_brand(self, driver, brand, wait, brand_index=0):
         """브랜드 선택"""
-        if brand == "콴다":
-            # 콴다는 엔터키로 선택 (브랜드가 1개뿐)
-            brand_element = driver.switch_to.active_element
-            brand_element.send_keys(Keys.ENTER)
-            print(f"✅ {brand} 브랜드 선택 완료 (엔터키)")
-        else:
-            # 다른 브랜드는 텍스트로 선택
-            brand_option = wait.until(EC.element_to_be_clickable((By.XPATH, f"//span[contains(text(), '{brand}')]")))
-            brand_option.click()
-            print(f"✅ {brand} 브랜드 선택 완료")
+        # 브랜드 드롭다운 클릭
+        brand_element = driver.switch_to.active_element
+        time.sleep(1)
         
+        # 브랜드 인덱스만큼 down 키 입력
+        for _ in range(brand_index + 1):
+            brand_element.send_keys(Keys.ARROW_DOWN)
+            time.sleep(0.5)
+        
+        # 엔터키로 선택
+        brand_element.send_keys(Keys.ENTER)
+        print(f"✅ {brand} 브랜드 선택 완료 (down {brand_index + 1}회)")
         time.sleep(1)
         return True
 
@@ -358,21 +347,84 @@ class DataManager:
 
         driver.switch_to.default_content()
 
-    def _process_sms_data(self, driver, config, start_date, end_date, brand_name=None):
-        """SMS 데이터 처리 (날짜 입력, 검색, 다운로드)"""
-        print(f"📋 SMS 데이터 처리 시작 {f'({brand_name})' if brand_name else ''}")
+    def _try_click_no_data_alert(self, driver, wait):
+        """데이터 없음 알림창 확인 버튼 클릭 시도 (여러 방법)
+        
+        Returns:
+            tuple: (성공 여부, 성공한 방법 설명)
+        """
+        # 방법 1: 기본 클릭
+        try:
+            ok_button = driver.find_element(By.CSS_SELECTOR, "#ax5-dialog-29 button[data-dialog-btn='ok']")
+            ok_button.click()
+            return True, "기본 클릭"
+        except Exception:
+            pass
+
+        # 방법 2: JavaScript 클릭
+        try:
+            ok_button = driver.find_element(By.CSS_SELECTOR, "#ax5-dialog-29 button[data-dialog-btn='ok']")
+            driver.execute_script("arguments[0].click();", ok_button)
+            return True, "JavaScript 클릭"
+        except Exception:
+            pass
+
+        # 방법 3: iframe 2로 전환 후 기본 클릭
+        try:
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            if len(iframes) > 1:
+                driver.switch_to.frame(iframes[1])
+                ok_button = driver.find_element(By.CSS_SELECTOR, "#ax5-dialog-29 button[data-dialog-btn='ok']")
+                ok_button.click()
+                driver.switch_to.default_content()
+                return True, "iframe 2 전환 후 기본 클릭"
+        except Exception:
+            driver.switch_to.default_content()
+            pass
+
+        # 방법 4: iframe 2로 전환 후 JavaScript 클릭
+        try:
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            if len(iframes) > 1:
+                driver.switch_to.frame(iframes[1])
+                ok_button = driver.find_element(By.CSS_SELECTOR, "#ax5-dialog-29 button[data-dialog-btn='ok']")
+                driver.execute_script("arguments[0].click();", ok_button)
+                driver.switch_to.default_content()
+                return True, "iframe 2 전환 후 JavaScript 클릭"
+        except Exception:
+            driver.switch_to.default_content()
+            pass
+
+        # 방법 5: iframe 1로 전환 후 기본 클릭
+        try:
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            if len(iframes) > 0:
+                driver.switch_to.frame(iframes[0])
+                ok_button = driver.find_element(By.CSS_SELECTOR, "#ax5-dialog-29 button[data-dialog-btn='ok']")
+                ok_button.click()
+                driver.switch_to.default_content()
+                return True, "iframe 1 전환 후 기본 클릭"
+        except Exception:
+            driver.switch_to.default_content()
+            pass
+
+        return False, "모든 방법 실패"
+
+    def _process_sms_data(self, driver, config, start_date=None, end_date=None, brand=None, is_last_brand=False):
+        """SMS 데이터 처리 (검색 및 다운로드)"""
+        wait = WebDriverWait(driver, 10)
         
         # 날짜 입력
-        if start_date and config.get('start_date_selector'):
-            start_input = driver.find_element(By.CSS_SELECTOR, config['start_date_selector'])
-            start_input.clear()
-            start_input.send_keys(start_date)
+        if start_date:
+            start_date_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, config['start_date_selector'])))
+            start_date_input.clear()
+            start_date_input.send_keys(start_date)
             print(f"✅ 시작날짜 입력: {start_date}")
         
-        if end_date and config.get('end_date_selector'):
-            end_input = driver.find_element(By.CSS_SELECTOR, config['end_date_selector'])
-            end_input.clear()
-            end_input.send_keys(end_date)
+        if end_date:
+            end_date_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, config['end_date_selector'])))
+            end_date_input.clear()
+            end_date_input.send_keys(end_date)
             print(f"✅ 종료날짜 입력: {end_date}")
         
         # 검색 버튼 클릭
@@ -381,11 +433,9 @@ class DataManager:
         for btn in buttons:
             if search_btn_text in btn.text:
                 btn.click()
-                brand_text = f" ({brand_name})" if brand_name else ""
-                print(f"✅ 검색 실행{brand_text}")
+                print(f"✅ 검색 실행 ({brand if brand else ''})")
                 break
-                
-        time.sleep(3)
+        time.sleep(2)
         
         # 엑셀 다운로드
         if config.get('download_btn_selector'):
@@ -393,21 +443,33 @@ class DataManager:
             before_files = set(os.listdir(download_dir))
             download_btn = driver.find_element(By.CSS_SELECTOR, config['download_btn_selector'])
             download_btn.click()
-            brand_text = f" ({brand_name})" if brand_name else ""
-            print(f"✅ 엑셀 다운로드{brand_text}")
-
-            # 데이터 없음 알림 감지 및 처리
+            print(f"✅ 엑셀 다운로드 클릭 ({brand if brand else ''})")
+            time.sleep(2)
+        
+        # 데이터 없음 알림 처리
+        if brand:  # 브랜드가 있는 경우
             try:
-                alert = WebDriverWait(driver, 2).until(
+                alert = wait.until(
                     EC.visibility_of_element_located((By.CSS_SELECTOR, "#ax5-dialog-29 .ax-dialog-msg"))
                 )
                 if "검색된 데이터가 없습니다" in alert.text:
                     print("검색된 데이터가 없습니다. 다음 단계로 진행.")
-                    return True
+                    
+                    if not is_last_brand:  # 마지막 브랜드가 아닌 경우에만 확인 버튼 클릭 시도
+                        success, method = self._try_click_no_data_alert(driver, wait)
+                        if success:
+                            print(f"✅ 데이터 없음 알림창 확인 버튼 클릭 성공 (방법: {method})")
+                        else:
+                            print("❌ 데이터 없음 알림창 확인 버튼 클릭 실패")
+                    return False  # 데이터 없음 표시
             except Exception:
-                pass
-
-            # 다운로드 완료 대기 (최대 30초)
+                pass  # 알림창이 없으면 계속 진행
+        else:  # 일반 사이트의 경우
+            if self._handle_no_data_alert(driver, wait):
+                return False  # 데이터 없음 표시
+        
+        # 다운로드 완료 대기 (최대 30초)
+        if config.get('download_btn_selector'):
             max_wait = 30
             check_interval = 1
             downloaded = False
@@ -432,4 +494,4 @@ class DataManager:
                 print("다운로드 대기 시간 초과")
             time.sleep(1)
         
-        return True
+        return True  # 데이터 있음 표시
