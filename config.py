@@ -19,9 +19,9 @@ class ElementConfig:
         "default": 10,
         "short": 3,
         "long": 30,
-        "key_interval": 0.5,  # 키 입력 간격
-        "download_check": 1,  # 다운로드 체크 간격
-        "brand_select": 0.5   # 브랜드 선택 간격
+        "key_interval": 0.5,  
+        "download_check": 1,  
+        "brand_select": 0.5   
     }
     
     # 공통 셀렉터
@@ -283,39 +283,6 @@ class AccountConfig:
             "brands": ["콴다"],  
             "brand_dropdown_selector": "input[data-ax5autocomplete-display='input']",
             "sms_iframe_index": 1  # iframe 2 (0-based index)
-        },
-        "W컨셉": {
-            "id_selector": "#userCd",
-            "pw_selector": "#userPs",
-            "login_btn": "#formView01 > div.panel-body > div.panel-right > table > tbody > tr:nth-child(2) > td:nth-child(3) > button",
-            "need_softphone_off": False,
-            "checkbox_selector": "#agreeCheck"
-            # SMS 기능 없음
-        },
-        "볼드워크": {
-            "id_selector": "#projUserCd",
-            "pw_selector": "#userPs",
-            "login_btn": "#loginBtn",
-            "need_softphone_off": True,
-            "checkbox_selector": "#agreeCheck",
-            "need_menu_click": True,  # 새 어드민 여부
-            "menu_selector": "#sidebar > div > div.top.tab-wrap > ul > li.tab-item.active",
-            "sms_service_selector": "#menuNav > li:nth-child(5) > a",
-            "sms_history_selector": "#menu_5423 > li:nth-child(2) > a",
-            "start_date_selector": "input[name='schSdate']",
-            "end_date_selector": "input[name='schEdate']",
-            "search_btn_text": "조회",
-            "download_btn_selector": "#titleBtn > button:nth-child(1)"
-        },
-        "메디빌더": {
-            "id_selector": "#projUserCd", 
-            "pw_selector": "#userPs",
-            "login_btn": "#loginBtn",
-            "need_softphone_off": True,
-            "checkbox_selector": "#agreeCheck",
-            "need_menu_click": True, 
-            "menu_selector": "#sidebar > div > div.top.tab-wrap > ul > li.tab-item.active"
-            # SMS 기능 없음
         }
     }
     
@@ -337,7 +304,7 @@ class AccountConfig:
             "no_data_text": "검색된 데이터가 없습니다"
         }
     }
-
+    # 세부 계정 설정
     ACCOUNTS = {
         "디싸이더스/애드프로젝트": {
             "type": "sms",

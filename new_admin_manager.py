@@ -22,7 +22,7 @@ class NewAdminManager:
             driver.execute_script(ElementConfig.JS['click'], element)
             self._wait_for_masks(driver)
         except Exception as e:
-            print(f"❌ 요소 클릭 실패 ({selector}): {str(e)}")
+            print(f"요소 클릭 실패 ({selector}): {str(e)}")
             raise
     
     def _wait_for_masks(self, driver):
@@ -40,21 +40,21 @@ class NewAdminManager:
             # 메인 메뉴
             main_menu = menu_config["main_menu"]
             self._click_element(driver, main_menu)
-            print("✅ 메인 메뉴 클릭")
+            print("메인 메뉴 클릭")
             
             # SMS 서비스 메뉴
             sms_service = menu_config["sms_service"]
             self._click_element(driver, sms_service)
-            print("✅ SMS 서비스 메뉴 클릭")
+            print("SMS 서비스 메뉴 클릭")
             
             # SMS 이력 메뉴
             sms_history = menu_config["sms_history"]
             self._click_element(driver, sms_history)
-            print("✅ SMS 이력 메뉴 클릭")
+            print("SMS 이력 메뉴 클릭")
             
             return True
         except Exception as e:
-            print(f"❌ 메뉴 클릭 실패: {str(e)}")
+            print(f"메뉴 클릭 실패: {str(e)}")
             return False
     
     def process_sms_data(self, driver, config):
@@ -82,18 +82,18 @@ class NewAdminManager:
             
             # 6. 데이터 없음 체크
             if self._check_no_data(driver):
-                print("❌ 데이터가 없습니다.")
+                print("데이터가 없습니다.")
                 return False
             
             # 7. 다운로드 실행
             download_button = config.get("download_button", "button.btn-default")
             self._click_element(driver, download_button)
             
-            print("✅ 데이터 다운로드 완료")
+            print("데이터 다운로드 완료")
             return True
             
         except Exception as e:
-            print(f"❌ 오류 발생: {str(e)}")
+            print(f"오류 발생: {str(e)}")
             return False
     
     def _switch_to_iframe(self, driver, index):
@@ -103,7 +103,7 @@ class NewAdminManager:
                 EC.frame_to_be_available_and_switch_to_it(index)
             )
         except Exception as e:
-            print(f"❌ iframe 전환 실패: {str(e)}")
+            print(f"iframe 전환 실패: {str(e)}")
             raise
     
     def _set_date(self, driver, month):
@@ -122,7 +122,7 @@ class NewAdminManager:
                     continue
             raise Exception("날짜 선택자를 찾을 수 없습니다.")
         except Exception as e:
-            print(f"❌ 날짜 설정 실패: {str(e)}")
+            print(f"날짜 설정 실패: {str(e)}")
             raise
     
     def _select_brands(self, driver, brands):
@@ -142,10 +142,10 @@ class NewAdminManager:
                     driver.execute_script(ElementConfig.JS['click'], element)
                     self._wait_for_masks(driver)
                 except:
-                    print(f"⚠️ 브랜드 '{brand}' 선택 실패")
+                    print(f"브랜드 '{brand}' 선택 실패")
                     continue
         except Exception as e:
-            print(f"❌ 브랜드 선택 실패: {str(e)}")
+            print(f"브랜드 선택 실패: {str(e)}")
             raise
     
     def _check_no_data(self, driver):
