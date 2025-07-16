@@ -223,19 +223,6 @@ class AccountConfig:
     
     # SMS 계정 설정
     SMS_CONFIG = {
-        "SK일렉링크": {
-            "id_selector": "#userCd",
-            "pw_selector": "#userPs", 
-            "login_btn": "#formView01 > div.panel-body > div.panel-right > table > tbody > tr:nth-child(2) > td:nth-child(3) > button",
-            "need_softphone_off": False,
-            "checkbox_selector": "#agreeCheck",
-            "sms_service_selector": "#aside-menu-0_25_span",
-            "sms_history_selector": "#aside-menu-0_27_span",
-            "start_date_selector": "input[name='schSdate']",
-            "end_date_selector": "input[name='schEdate']",
-            "search_btn_text": "조회",
-            "download_btn_selector": "#titleBtn > button:nth-child(1)"
-        },
         "앤하우스": {
             "id_selector": "#userCd",
             "pw_selector": "#userPs",

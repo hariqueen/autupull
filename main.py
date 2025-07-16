@@ -3,6 +3,8 @@ from login_manager import LoginManager
 from data_manager import DataManager
 from new_admin_manager import NewAdminManager
 from config import DateConfig
+from dotenv import load_dotenv
+load_dotenv() 
 
 class AccountManager:
     """통합 계정 관리 시스템"""

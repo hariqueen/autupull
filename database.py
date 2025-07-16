@@ -12,14 +12,21 @@ class DatabaseManager:
     def _initialize_firebase(self):
         """Firebase 초기화"""
         if not firebase_admin._apps:
-            # 환경변수에서 전체 JSON 문자열 가져오기
-            firebase_json = os.getenv("FIREBASE_PRIVATE_KEY", "")
-            if not firebase_json:
-                raise ValueError("환경변수가 비어 있습니다.")
+            # 환경변수에서 JSON 문자열 가져오기
+            firebase_json = os.getenv("FIREBASE_PRIVATE_KEY")
             
-            # JSON 문자열 → 딕셔너리로 파싱
-            cred_dict = json.loads(firebase_json)
-            cred = credentials.Certificate(cred_dict)
+            if not firebase_json:
+                raise ValueError("FIREBASE_PRIVATE_KEY 환경변수가 설정되지 않았습니다.")
+            
+            try:
+                # JSON 문자열 → 딕셔너리로 파싱 (줄바꿈 문제 해결)
+                firebase_json = firebase_json.replace('\n', '\\n').replace('\r', '')
+                cred_dict = json.loads(firebase_json)
+                cred = credentials.Certificate(cred_dict)
+                print("✅ 환경변수에서 Firebase 인증 정보 로드")
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Firebase JSON 파싱 오류: {e}. .env 파일의 JSON 형식을 확인하세요.")
+            
             firebase_admin.initialize_app(cred)
         
         return firestore.client()
