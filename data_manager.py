@@ -424,3 +424,236 @@ class DataManager:
         
         print(f"🎉 {company_name} SMS 데이터 수집 완료")
         return True
+    
+    def download_chat_data(self, company_name, start_date=None, end_date=None):
+        """채팅 데이터 다운로드 (디싸이더스/애드프로젝트 전용)"""
+        session = self.login_manager.get_active_session(company_name, "sms")  # SMS 세션 재사용
+        if not session:
+            print(f"{company_name} 채팅 세션이 없습니다")
+            return False
+        
+        driver = session['driver']
+        config = session['account_data']['config']
+        wait = WebDriverWait(driver, ElementConfig.WAIT['default'])
+        
+        print(f"{company_name} 채팅 데이터 수집 시작")
+        
+        # 채팅 기능이 없는 회사 체크
+        if not config.get('has_chat'):
+            print(f"{company_name}는 채팅 기능이 없습니다")
+            return False
+        
+        def click_chat_menu_chain():
+            """채팅 메뉴 클릭 체인"""
+            try:
+                # 메인 프레임으로 돌아가기
+                driver.switch_to.default_content()
+                
+                # 채팅서비스 클릭
+                wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, config['chat_service_selector']))).click()
+                time.sleep(ElementConfig.WAIT['short'])
+                
+                # 채팅이력 클릭
+                wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, config['chat_history_selector']))).click()
+                time.sleep(ElementConfig.WAIT['short'])
+                return True
+            except Exception as e:
+                print(f"❌ 채팅 메뉴 클릭 실패: {e}")
+                return False
+        
+        # 채팅 메뉴 클릭
+        if not click_chat_menu_chain():
+            return False
+        
+        # 채팅에서도 브랜드 선택이 필요한 경우
+        if config.get('chat_has_brands'):
+            # 브랜드 선택 팝업 닫기
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            if len(iframes) > ElementConfig.IFRAME['brand_popup_index']:
+                driver.switch_to.frame(iframes[ElementConfig.IFRAME['brand_popup_index']])
+                try:
+                    driver.find_element(By.CSS_SELECTOR, ElementConfig.COMMON['alert_ok']).click()
+                    print("✅ 채팅 브랜드 선택 팝업 닫기 완료")
+                except Exception as e:
+                    print(f"❌ 채팅 브랜드 선택 팝업 닫기 실패: {e}")
+                driver.switch_to.default_content()
+
+            # 각 브랜드별로 처리
+            for brand_index, brand in enumerate(config['chat_brands']):
+                is_last_brand = brand_index == len(config['chat_brands']) - 1
+                print(f"🔍 {brand} 채팅 브랜드 처리 시작")
+                try:
+                    # iframe 전환
+                    print("🔍 채팅 iframe 확인 중...")
+                    iframes = driver.find_elements(By.TAG_NAME, "iframe")
+                    chat_iframe_index = config.get('chat_iframe_index', ElementConfig.IFRAME['data_index'])
+                    
+                    if len(iframes) <= chat_iframe_index:
+                        print(f"❌ 채팅 iframe이 부족함 (현재 {len(iframes)}개)")
+                        raise RuntimeError("채팅 iframe 없음")
+                    
+                    driver.switch_to.frame(iframes[chat_iframe_index])
+                    print(f"✅ 채팅 iframe[{chat_iframe_index}] 전환 완료")
+                    
+                    # 팀 디폴트 태그 제거 (채팅에서만 필요)
+                    if config.get('chat_need_team_tag_remove'):
+                        try:
+                            team_tag_remove_btn = driver.find_element(By.CSS_SELECTOR, 'div[data-ax5autocomplete-remove="true"]')
+                            team_tag_remove_btn.click()
+                            print("✅ 팀 디폴트 태그 제거 완료")
+                            time.sleep(ElementConfig.WAIT['short'])
+                        except Exception as e:
+                            print(f"⚠️ 팀 디폴트 태그 제거 실패 (계속 진행): {e}")
+                    
+                    # 브랜드 선택
+                    dropdown = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, config['chat_brand_dropdown_selector'])))
+                    dropdown.click()
+                    time.sleep(ElementConfig.WAIT['brand_select'])
+                    
+                    brand_element = driver.switch_to.active_element
+                    for _ in range(brand_index + 1):
+                        brand_element.send_keys(ElementConfig.BRAND['key_sequence']['select'][0])
+                        time.sleep(ElementConfig.WAIT['key_interval'])
+                    brand_element.send_keys(ElementConfig.BRAND['key_sequence']['select'][1])
+                    print(f"✅ {brand} 채팅 브랜드 선택 완료")
+                    time.sleep(ElementConfig.WAIT['short'])
+                    
+                    # 채팅 데이터 처리
+                    result = self._process_chat_data(driver, config, start_date, end_date, brand, is_last_brand)
+                    
+                    # 마지막 브랜드이고 데이터가 없으면 종료
+                    if is_last_brand and not result:
+                        print(f"마지막 채팅 브랜드 {brand}에서 데이터 없음 - 종료")
+                        driver.switch_to.default_content()
+                        return True
+                    
+                    # 다음 브랜드를 위해 X버튼 클릭
+                    if not is_last_brand:
+                        try:
+                            remove_btn = driver.find_element(By.CSS_SELECTOR, config['chat_brand_remove_btn_selector'])
+                            remove_btn.click()
+                            print("✅ 채팅 브랜드 X버튼 클릭 완료")
+                        except Exception as e:
+                            print(f"⚠️ 채팅 브랜드 X버튼 클릭 실패: {e}")
+                        time.sleep(ElementConfig.WAIT['short'])
+                    
+                    driver.switch_to.default_content()
+                    print(f"🎉 {brand} 채팅 브랜드 처리 완료")
+                    
+                except Exception as e:
+                    print(f"❌ {brand} 채팅 브랜드 처리 중 예외 발생: {e}")
+                    driver.switch_to.default_content()
+                    if not is_last_brand:
+                        click_chat_menu_chain()
+                        continue
+                    else:
+                        print(f"마지막 채팅 브랜드 {brand}에서 데이터 없음 - 종료")
+                        return True
+                
+                time.sleep(ElementConfig.WAIT['short'])
+        
+        else:
+            # 일반 회사 처리 (브랜드 없는 경우)
+            print("🔍 채팅 iframe 확인 중...")
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            chat_iframe_index = config.get('chat_iframe_index', ElementConfig.IFRAME['data_index'])
+            
+            if len(iframes) > chat_iframe_index:
+                driver.switch_to.frame(iframes[chat_iframe_index])
+                print(f"✅ 채팅 iframe[{chat_iframe_index}] 전환 완료")
+                time.sleep(ElementConfig.WAIT['short'])
+                
+                self._process_chat_data(driver, config, start_date, end_date)
+                driver.switch_to.default_content()
+            else:
+                print(f"❌ 채팅 iframe이 부족함 (현재 {len(iframes)}개)")
+                return False
+        
+        print(f"🎉 {company_name} 채팅 데이터 수집 완료")
+        return True
+
+    def _process_chat_data(self, driver, config, start_date=None, end_date=None, brand=None, is_last_brand=False):
+        """채팅 데이터 처리 (검색 및 다운로드)"""
+        wait = WebDriverWait(driver, 10)
+        
+        # 날짜 입력
+        if start_date:
+            start_date_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, config['chat_start_date_selector'])))
+            start_date_input.clear()
+            start_date_input.send_keys(start_date)
+            print(f"✅ 채팅 시작날짜 입력: {start_date}")
+        
+        if end_date:
+            end_date_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, config['chat_end_date_selector'])))
+            end_date_input.clear()
+            end_date_input.send_keys(end_date)
+            print(f"✅ 채팅 종료날짜 입력: {end_date}")
+        
+        # 검색 버튼 클릭
+        search_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, config['chat_search_btn_selector'])))
+        search_btn.click()
+        print(f"✅ 채팅 검색 실행 ({brand if brand else ''})")
+        time.sleep(2)
+        
+        # 엑셀 다운로드
+        if config.get('chat_download_btn_selector'):
+            download_dir = "/Users/haribo/Downloads"  # 맥북 기본 다운로드 폴더
+            before_files = set(os.listdir(download_dir))
+            
+            try:
+                download_btn = driver.find_element(By.CSS_SELECTOR, config['chat_download_btn_selector'])
+                download_btn.click()
+                print(f"✅ 채팅 엑셀 다운로드 클릭 ({brand if brand else ''})")
+                time.sleep(2)
+            except Exception as e:
+                print(f"❌ 채팅 다운로드 버튼 클릭 실패: {e}")
+                return False
+        
+        # 데이터 없음 알림 처리
+        if brand:  # 브랜드가 있는 경우
+            try:
+                alert = wait.until(
+                    EC.visibility_of_element_located((By.CSS_SELECTOR, "#ax5-dialog-29 .ax-dialog-msg"))
+                )
+                if "검색된 데이터가 없습니다" in alert.text:
+                    print("채팅에서 검색된 데이터가 없습니다. 다음 단계로 진행.")
+                    
+                    if not is_last_brand:  # 마지막 브랜드가 아닌 경우에만 확인 버튼 클릭
+                        if self._try_click_no_data_alert(driver, wait):
+                            print("✅ 채팅 데이터 없음 알림창 확인 버튼 클릭 성공")
+                        else:
+                            print("❌ 채팅 데이터 없음 알림창 확인 버튼 클릭 실패")
+                    return False  # 데이터 없음 표시
+            except Exception:
+                pass  # 알림창이 없으면 계속 진행
+        else:  # 일반 사이트의 경우
+            if self._handle_no_data_alert(driver, wait):
+                return False  # 데이터 없음 표시
+        
+        # 다운로드 완료 대기 (최대 30초)
+        if config.get('chat_download_btn_selector'):
+            max_wait = 30
+            check_interval = 1
+            downloaded = False
+            for i in range(max_wait):
+                time.sleep(check_interval)
+                current_files = set(os.listdir(download_dir))
+                new_files = current_files - before_files
+                for file in new_files:
+                    if (file.endswith('.xlsx') or file.endswith('.xls')) and not file.endswith('.crdownload'):
+                        file_path = os.path.join(download_dir, file)
+                        prev_size = os.path.getsize(file_path)
+                        time.sleep(2)
+                        if os.path.getsize(file_path) == prev_size and prev_size > 0:
+                            print(f"채팅 다운로드 완료: {file}")
+                            downloaded = True
+                            break
+                if downloaded:
+                    break
+                if i % 5 == 0:
+                    print(f"채팅 다운로드 대기 중... ({i+1}/{max_wait}초)")
+            else:
+                print("채팅 다운로드 대기 시간 초과")
+            time.sleep(1)
+        
+        return True  # 데이터 있음 표시

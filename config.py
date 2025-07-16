@@ -91,7 +91,7 @@ class ElementConfig:
 class SiteConfig:
     """사이트별 설정"""
     
-    # 공통 새 어드민 시스템 설정
+    # 공통 새 어드민 시스템 설정 (실제 새 어드민을 사용하는 사이트용)
     NEW_ADMIN_CONFIG = {
         "menu": {
             "main_menu": "#sidebar > div > div.top.tab-wrap > ul > li:nth-child(2) > a",
@@ -109,39 +109,6 @@ class SiteConfig:
         }
     }
     
-    # 디싸이더스/애드프로젝트 설정
-    DECIDERS = {
-        "login": {
-            "url": "https://admin.deciders.co.kr/",
-            "id_selector": "#username",
-            "pw_selector": "#password",
-            "submit_selector": "button[type='submit']",
-            "success_check": ".user-info"
-        },
-        "sms": {
-            "is_new_admin": True,  # 새 어드민 여부
-            "menu": {
-                "main_menu": "#sidebar > div > div.top.tab-wrap > ul > li:nth-child(2) > a",
-                "sms_service": "#menuNav > li:nth-child(5) > a",
-                "sms_history": "#menu_5423 > li:nth-child(2) > a"
-            },
-            "iframe_index": 1,
-            "date_format": "%Y%m%d",
-            "start_date_selector": "#startDate",
-            "end_date_selector": "#endDate",
-            "search_text": "조회",
-            "no_data_alert": "#ax5-dialog-29 .ax-dialog-msg",
-            "no_data_text": "검색된 데이터가 없습니다",
-            "brand": {
-                "enabled": True,
-                "dropdown_selector": "div[data-ax5autocomplete]",
-                "option_selector": ".ax-autocomplete-option-item",
-                "option_index_attr": "data-option-index",
-                "list": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"]
-            }
-        }
-    }
-    
     # 앤하우스 설정
     ANHOUSE = {
         "login": {
@@ -152,7 +119,7 @@ class SiteConfig:
             "success_check": ".user-profile"
         },
         "sms": {
-            "is_new_admin": False,  # 새 어드민 여부
+            "is_new_admin": False,  # 기존 어드민 사용
             "menu_selector": "a[href='/sms/list']",
             "iframe_index": 0,
             "date_format": "%Y-%m-%d",
@@ -221,7 +188,7 @@ class DateConfig:
 class AccountConfig:
     """계정별 설정 관리"""
     
-    # SMS 계정 설정
+    # SMS 계정 설정 (기존 어드민 시스템용)
     SMS_CONFIG = {
         "앤하우스": {
             "id_selector": "#userCd",
@@ -237,11 +204,13 @@ class AccountConfig:
             "download_btn_selector": "#titleBtn > button:nth-child(1)"
         },
         "디싸이더스/애드프로젝트": {
+            "is_new_admin": False,  # 기존 어드민 시스템 사용
             "id_selector": "#userCd",
             "pw_selector": "#userPs",
             "login_btn": "#formView01 > div.panel-body > div.panel-right > table > tbody > tr:nth-child(2) > td:nth-child(3) > button",
             "need_softphone_off": False,
             "checkbox_selector": "#agreeCheck",
+            # SMS 관련 설정
             "sms_service_selector": "#aside-menu-0_16_span",
             "sms_history_selector": "#aside-menu-0_18_span",
             "start_date_selector": "input[name='schSdate']",
@@ -252,7 +221,21 @@ class AccountConfig:
             "brands": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"],
             "brand_dropdown_selector": "input[data-ax5autocomplete-display='input']",
             "brand_remove_btn_selector": "#searchView > div > div:nth-child(2) > div:nth-child(2) > div > div > div > div > a > div > div:nth-child(1)",
-            "sms_iframe_index": 1  # iframe 2 (0-based index)
+            "sms_iframe_index": 1,  # iframe 2 (0-based index)
+            # 채팅 관련 설정
+            "chat_service_selector": "#aside-menu-0_47_span",
+            "chat_history_selector": "#aside-menu-0_53_span",
+            "chat_start_date_selector": "#searchView01 > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div > input:nth-child(1)",
+            "chat_end_date_selector": "input[name='schEdate']",  # 종료날짜는 기존과 동일
+            "chat_download_btn_selector": "#searchView01 > div > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div > div > div > div > a > input[type=text]",
+            "chat_brand_dropdown_selector": "input[data-ax5autocomplete-display='input']",  # 브랜드 드롭다운은 SMS와 동일
+            "chat_brand_remove_btn_selector": "#searchView0 > div > div.ax-search-tbl > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div > div > div > div > a > div > div:nth-child(1)",
+            "chat_search_btn_selector": "#titleBtn > button:nth-child(2)",
+            "chat_iframe_index": 1,  # iframe 인덱스 (디버그 후 조정 필요)
+            "has_chat": True,  # 채팅 기능 보유 여부
+            "chat_has_brands": True,
+            "chat_brands": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"],
+            "chat_need_team_tag_remove": True  # 팀 디폴트 태그 삭제 필요 여부
         },
         "매스프레소(콴다)": {
             "id_selector": "#userCd",
@@ -289,23 +272,5 @@ class AccountConfig:
             "download_btn_selector": "#button-2155",
             "no_data_alert_selector": "#ax5-dialog-29 .ax-dialog-msg",
             "no_data_text": "검색된 데이터가 없습니다"
-        }
-    }
-    # 세부 계정 설정
-    ACCOUNTS = {
-        "디싸이더스/애드프로젝트": {
-            "type": "sms",
-            "url": "https://admin.deciders.co.kr/",
-            "id": "YOUR_ID",
-            "pw": "YOUR_PASSWORD",
-            "config": {
-                "need_menu_click": True,
-                "has_brands": True,
-                "brands": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"],
-                "brand_dropdown_selector": "div[data-ax5autocomplete]",
-                "start_date_selector": "#startDate",
-                "end_date_selector": "#endDate",
-                "download_btn_selector": "button.btn-default"
-            }
         }
     }
