@@ -55,10 +55,10 @@ class LoginManager:
                     EC.element_to_be_clickable((By.CSS_SELECTOR, "#ax5-dialog-29 > div.ax-dialog-body > div.ax-dialog-buttons > div > button"))
                 )
                 alert_ok_button.click()
-                print("✅ 로그인 후 알림창 닫기 완료")
+                print("로그인 후 알림창 닫기 완료")
                 time.sleep(1)
             except:
-                print("✅ 로그인 후 알림창 없음")  # 알림창이 없는 경우 (정상적인 상황)
+                print("로그인 후 알림창 없음")  # 알림창이 없는 경우 (정상적인 상황)
                 pass
             
             if keep_session:

@@ -48,8 +48,8 @@ class DatabaseManager:
                 if account is not None:
                     account['config'] = config_map.get(company)
                     accounts.append(account)
-                    print(f"✅ {company} {account_type.upper()} 계정 로드")
+                    print(f"  {company} {account_type.upper()} 계정 로드")
                 else:
-                    print(f"⚠️ {company} {account_type.upper()} 계정 데이터가 없습니다.")
+                    print(f"  {company} {account_type.upper()} 계정 데이터가 없습니다.")
         
         return accounts

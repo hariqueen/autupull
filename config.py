@@ -117,82 +117,6 @@ class ElementConfig:
         "iframe_index": 1,
     }
 
-class SiteConfig:
-    """사이트별 설정"""
-    
-    # 공통 새 어드민 시스템 설정
-    NEW_ADMIN_CONFIG = {
-        "menu": {
-            "main_menu": "#sidebar > div > div.top.tab-wrap > ul > li:nth-child(2) > a",
-            "sms_service": "#menuNav > li:nth-child(5) > a",
-            "sms_history": "#menu_5423 > li:nth-child(2) > a"
-        },
-        "sms": {
-            "iframe_index": 0,
-            "date_selectors": ["#pickerViewdt", "#schForm > table > tbody > tr:nth-child(1) > td:nth-child(2) > div", "#startDt"],
-            "brand_selector": "span.select2-selection",
-            "search_button": "body > div.content-wrap > div.cont-top > div.title-wrap > div > button:nth-child(1)",
-            "download_button": "body > div.content-wrap > div.cont-top > div.title-wrap > div > button:nth-child(2)",
-            "no_data_alert": ".alert",
-            "no_data_text": "데이터가 없습니다"
-        }
-    }
-    
-    # 디싸이더스/애드프로젝트 설정
-    DECIDERS = {
-        "login": {
-            "url": "https://admin.deciders.co.kr/",
-            "id_selector": "#username",
-            "pw_selector": "#password",
-            "submit_selector": "button[type='submit']",
-            "success_check": ".user-info"
-        },
-        "sms": {
-            "is_new_admin": True,  # 새 어드민 여부
-            "menu": {
-                "main_menu": "#sidebar > div > div.top.tab-wrap > ul > li:nth-child(2) > a",
-                "sms_service": "#menuNav > li:nth-child(5) > a",
-                "sms_history": "#menu_5423 > li:nth-child(2) > a"
-            },
-            "iframe_index": 1,
-            "date_format": "%Y%m%d",
-            "start_date_selector": "#startDate",
-            "end_date_selector": "#endDate",
-            "search_text": "조회",
-            "no_data_alert": "#ax5-dialog-29 .ax-dialog-msg",
-            "no_data_text": "검색된 데이터가 없습니다",
-            "brand": {
-                "enabled": True,
-                "dropdown_selector": "div[data-ax5autocomplete]",
-                "option_selector": ".ax-autocomplete-option-item",
-                "option_index_attr": "data-option-index",
-                "list": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"]
-            }
-        }
-    }
-    
-    # 앤하우스 설정
-    ANHOUSE = {
-        "login": {
-            "url": "https://anhouse-admin.com/",
-            "id_selector": "#id",
-            "pw_selector": "#password",
-            "submit_selector": "button.login-btn",
-            "success_check": ".user-profile"
-        },
-        "sms": {
-            "is_new_admin": False,  # 새 어드민 여부
-            "menu_selector": "a[href='/sms/list']",
-            "iframe_index": 0,
-            "date_format": "%Y-%m-%d",
-            "start_date_selector": "#startDt",
-            "end_date_selector": "#endDt",
-            "search_text": "검색",
-            "no_data_alert": ".alert",
-            "no_data_text": "데이터가 없습니다"
-        }
-    }
-
 class DateConfig:
     """날짜 설정"""
     
@@ -248,13 +172,12 @@ class DateConfig:
         }
 
 class AccountConfig:
-    """계정별 설정 관리"""
-    
+    """계정별 설정 관리 (중복 없이 단일화)"""
     # SMS 계정 설정
     SMS_CONFIG = {
         "SK일렉링크": {
             "id_selector": "#userCd",
-            "pw_selector": "#userPs", 
+            "pw_selector": "#userPs",
             "login_btn": "#formView01 > div.panel-body > div.panel-right > table > tbody > tr:nth-child(2) > td:nth-child(3) > button",
             "need_softphone_off": False,
             "checkbox_selector": "#agreeCheck",
@@ -294,7 +217,8 @@ class AccountConfig:
             "brands": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"],
             "brand_dropdown_selector": "input[data-ax5autocomplete-display='input']",
             "brand_remove_btn_selector": "#searchView > div > div:nth-child(2) > div:nth-child(2) > div > div > div > div > a > div > div:nth-child(1)",
-            "sms_iframe_index": 1  # iframe 2 (0-based index)
+            "sms_iframe_index": 1,
+            "is_new_admin": True
         },
         "매스프레소(콴다)": {
             "id_selector": "#userCd",
@@ -309,16 +233,15 @@ class AccountConfig:
             "search_btn_text": "조회",
             "download_btn_selector": "#titleBtn > button:nth-child(1)",
             "has_brands": True,
-            "brands": ["콴다"],  
+            "brands": ["콴다"],
             "brand_dropdown_selector": "input[data-ax5autocomplete-display='input']",
-            "sms_iframe_index": 1  # iframe 2 (0-based index)
+            "sms_iframe_index": 1
         }
     }
-    
     # CALL 계정 설정
     CALL_CONFIG = {
         "앤하우스": {
-            "id_selector": "#textfield-3551-inputEl", 
+            "id_selector": "#textfield-3551-inputEl",
             "pw_selector": "#textfield-3552-inputEl",
             "checkbox_selector": "#chkAgree-displayEl",
             "login_btn": "#login-btn-btnInnerEl",
@@ -333,21 +256,21 @@ class AccountConfig:
             "no_data_text": "검색된 데이터가 없습니다"
         }
     }
-    # 세부 계정 설정
-    ACCOUNTS = {
-        "디싸이더스/애드프로젝트": {
-            "type": "sms",
-            "url": "https://admin.deciders.co.kr/",
-            "id": "YOUR_ID",
-            "pw": "YOUR_PASSWORD",
-            "config": {
-                "need_menu_click": True,
-                "has_brands": True,
-                "brands": ["엑스퍼", "스마트웰컴", "바이오숨", "스마트웰", "유리제로"],
-                "brand_dropdown_selector": "div[data-ax5autocomplete]",
-                "start_date_selector": "#startDate",
-                "end_date_selector": "#endDate",
-                "download_btn_selector": "button.btn-default"
-            }
+
+class SiteConfig:
+    NEW_ADMIN_CONFIG = {
+        "menu": {
+            "main_menu": "#sidebar > div > div.top.tab-wrap > ul > li:nth-child(2) > a",
+            "sms_service": "#menuNav > li:nth-child(5) > a",
+            "sms_history": "#menu_5423 > li:nth-child(2) > a"
+        },
+        "sms": {
+            "iframe_index": 0,
+            "date_selectors": ["#pickerViewdt", "#schForm > table > tbody > tr:nth-child(1) > td:nth-child(2) > div", "#startDt"],
+            "brand_selector": "span.select2-selection",
+            "search_button": "body > div.content-wrap > div.cont-top > div.title-wrap > div > button:nth-child(1)",
+            "download_button": "body > div.content-wrap > div.cont-top > div.title-wrap > div > button:nth-child(2)",
+            "no_data_alert": ".alert",
+            "no_data_text": "데이터가 없습니다"
         }
     }

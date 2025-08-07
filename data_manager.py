@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 import os
-from config import ElementConfig, SiteConfig, DateConfig
+from config import ElementConfig, DateConfig
 
 class DataManager:
     """데이터 수집 설정 및 다운로드 관리 클래스"""
@@ -295,6 +295,7 @@ class DataManager:
         return True  # 데이터 있음 표시
 
     def process_chat_no_brand(self, driver, config, start_date, end_date):
+        print(f">>> process_chat_no_brand 함수 진입: driver={driver}, config={config}, start_date={start_date}, end_date={end_date}")
         print("디싸이더스/애드프로젝트 CHAT 데이터 수집 시작")
         wait = WebDriverWait(driver, 10)
         try:
