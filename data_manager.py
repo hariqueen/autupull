@@ -294,6 +294,139 @@ class DataManager:
         
         return True  # 데이터 있음 표시
 
+    def process_chat_no_brand(self, driver, config, start_date, end_date):
+        print("디싸이더스/애드프로젝트 CHAT 데이터 수집 시작")
+        wait = WebDriverWait(driver, 10)
+        try:
+            # 채팅관리 메뉴 클릭
+            chat_menu = wait.until(EC.element_to_be_clickable((By.XPATH, ElementConfig.CHAT["menu_chat"])))
+            chat_menu.click()
+            time.sleep(1)
+            # 채팅진행건리스트 클릭
+            chat_list = wait.until(EC.element_to_be_clickable((By.XPATH, ElementConfig.CHAT["menu_chat_list"])))
+            chat_list.click()
+            time.sleep(1)
+            # iframe 전환
+            iframes = driver.find_elements(By.TAG_NAME, "iframe")
+            if len(iframes) > 1:
+                driver.switch_to.frame(iframes[1])
+                print("iframe 전환 완료")
+                time.sleep(2)
+                # 팀 태그 제거
+                print("팀 태그 제거 시도 중...")
+                try:
+                    team_tag = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["team_tag_remove"])))
+                    team_tag.click()
+                    print("팀 태그 제거 완료")
+                except Exception as e:
+                    print(f"팀 태그 제거 실패: {e}")
+                time.sleep(1)
+                # 날짜 입력
+                print("날짜 입력 시도 중...")
+                from datetime import datetime
+                start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                try:
+                    # 달력 UI 활성화 (시작 날짜)
+                    start_date_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["start_date_input"])))
+                    start_date_input.click()
+                    time.sleep(1)
+                    print("시작 날짜 달력 활성화")
+                    # 시작일 선택 - 왼쪽 달력에서
+                    print("시작일 달력 연월 확인 중...")
+                    current_year = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_year"]))).text)
+                    current_month = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_month"]))).text.replace("월", ""))
+                    target_year = start_date_dt.year
+                    target_month = start_date_dt.month
+                    print(f"시작일 달력: {current_year}년 {current_month}월 → {target_year}년 {target_month}월로 이동")
+                    while current_year != target_year or current_month != target_month:
+                        if (current_year * 12 + current_month) > (target_year * 12 + target_month):
+                            prev_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_prev"])))
+                            prev_button.click()
+                        else:
+                            next_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_next"])))
+                            next_button.click()
+                        time.sleep(0.5)
+                        current_year = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_year"]))).text)
+                        current_month = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_month"]))).text.replace("월", ""))
+                    # 날짜 선택
+                    start_day = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_left_day"].format(start_date))))
+                    start_day.click()
+                    time.sleep(1)
+                    # 종료 날짜 달력 활성화
+                    end_date_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["end_date_input"])))
+                    end_date_input.click()
+                    time.sleep(1)
+                    print("종료 날짜 달력 활성화")
+                    current_year = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_year"]))).text)
+                    current_month = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_month"]))).text.replace("월", ""))
+                    target_year = end_date_dt.year
+                    target_month = end_date_dt.month
+                    print(f"종료일 달력: {current_year}년 {current_month}월 → {target_year}년 {target_month}월로 이동")
+                    while current_year != target_year or current_month != target_month:
+                        if (current_year * 12 + current_month) > (target_year * 12 + target_month):
+                            prev_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_prev"])))
+                            prev_button.click()
+                        else:
+                            next_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_next"])))
+                            next_button.click()
+                        time.sleep(0.5)
+                        current_year = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_year"]))).text)
+                        current_month = int(wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_month"]))).text.replace("월", ""))
+                    # 날짜 선택
+                    end_day = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_right_day"].format(end_date))))
+                    end_day.click()
+                    time.sleep(1)
+                    # OK 버튼 클릭
+                    ok_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["calendar_ok_btn"])))
+                    ok_button.click()
+                    time.sleep(1)
+                    print("날짜 입력 성공")
+                except Exception as e:
+                    print(f"날짜 입력 실패: {str(e)}")
+                    print("날짜 입력이 실패했습니다.")
+                # 조회 버튼 클릭
+                try:
+                    search_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["search_btn"])))
+                    search_btn.click()
+                    print("조회 버튼 클릭")
+                    time.sleep(2)
+                except Exception as e:
+                    print(f"조회 버튼 클릭 실패: {e}")
+                time.sleep(2)
+                # 알림창 처리
+                def handle_alert(driver):
+                    try:
+                        alert_button = WebDriverWait(driver, 2).until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["alert_ok_btn"]))
+                        )
+                        alert_button.click()
+                        print("데이터 없음 알림창 닫기 완료")
+                        return True
+                    except Exception:
+                        print("데이터 없음 알림창 없음")
+                        return False
+                alert_closed = handle_alert(driver)
+                if alert_closed:
+                    print("검색된 데이터 없음 - 알림창 닫음")
+                    time.sleep(1)
+                else:
+                    iframes = driver.find_elements(By.TAG_NAME, "iframe")
+                    if len(iframes) > ElementConfig.CHAT["iframe_index"]:
+                        driver.switch_to.frame(iframes[ElementConfig.CHAT["iframe_index"]])
+                    try:
+                        excel_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ElementConfig.CHAT["excel_btn"])))
+                        excel_btn.click()
+                        print("엑셀 다운로드 버튼 클릭")
+                        time.sleep(2)
+                    except Exception as e:
+                        print(f"엑셀 다운로드 버튼 클릭 실패: {e}")
+            else:
+                print("iframe이 2개 이상이 아님. 전환 실패")
+        except Exception as e:
+            print(f"채팅 메뉴 이동 실패: {e}")
+        return True
+
     def download_sms_data(self, company_name, start_date=None, end_date=None):
         """SMS 데이터 다운로드"""
         session = self.login_manager.get_active_session(company_name, "sms")

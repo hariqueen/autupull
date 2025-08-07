@@ -88,6 +88,35 @@ class ElementConfig:
         }
     }
 
+    # 채팅 관련 셀렉터 (brand_x_test.py, data_manager.py 호환)
+    CHAT = {
+        "id_input": "#userCd",
+        "pw_input": "#userPs",
+        "login_btn": "#formView01 > div.panel-body > div.panel-right > table > tbody > tr:nth-child(2) > td:nth-child(3) > button",
+        "agree_checkbox": "#agreeCheck",
+        "alert_ok_btn": "#ax5-dialog-29 > div.ax-dialog-body > div.ax-dialog-buttons > div > button",
+        "menu_chat": "//span[@id='aside-menu-0_47_span'][contains(text(), '채팅관리')]",
+        "menu_chat_list": "//span[@id='aside-menu-0_53_span'][contains(text(), '채팅진행건리스트')]",
+        "team_tag_remove": "div[data-ax5autocomplete-remove='true']",
+        "start_date_input": "#searchView01 > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div > input:nth-child(1)",
+        "end_date_input": "#searchView01 > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div > input:nth-child(3)",
+        "calendar_left_year": "div.ax-picker-content > div:nth-child(1) div.date-display span[data-calendar-display='year']",
+        "calendar_left_month": "div.ax-picker-content > div:nth-child(1) div.date-display span[data-calendar-display='month']",
+        "calendar_left_prev": "div.ax-picker-content > div:nth-child(1) a.date-move-left[data-calendar-move='left']",
+        "calendar_left_next": "div.ax-picker-content > div:nth-child(1) a.date-move-right[data-calendar-move='right']",
+        "calendar_left_day": "div.ax-picker-content > div:nth-child(1) a[data-calendar-item-date='{}']",
+        "calendar_right_year": "div.ax-picker-content > div:nth-child(3) div.date-display span[data-calendar-display='year']",
+        "calendar_right_month": "div.ax-picker-content > div:nth-child(3) div.date-display span[data-calendar-display='month']",
+        "calendar_right_prev": "div.ax-picker-content > div:nth-child(3) a.date-move-left[data-calendar-move='left']",
+        "calendar_right_next": "div.ax-picker-content > div:nth-child(3) a.date-move-right[data-calendar-move='right']",
+        "calendar_right_day": "div.ax-picker-content > div:nth-child(3) a[data-calendar-item-date='{}']",
+        "calendar_ok_btn": "div.ax-picker-buttons > button:nth-child(2)",
+        "search_btn": "#titleBtn > button:nth-child(2)",
+        "excel_btn": "#titleBtn > button:nth-child(1)",
+        "x_btn": "div[data-ax5autocomplete-remove='true']",
+        "iframe_index": 1,
+    }
+
 class SiteConfig:
     """사이트별 설정"""
     

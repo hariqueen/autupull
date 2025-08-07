@@ -91,7 +91,7 @@ class AccountManager:
         self._print_call_results(results, download)
         return results
     
-    def sms_data_workflow(self):
+    def sms_data_workflow(self, company_name=None):
         """SMS 계정 전체 워크플로 (로그인 → 설정 → 검색 → 다운로드 → 닫기)"""
         print("SMS 계정 데이터 워크플로 시작")
         
@@ -101,6 +101,8 @@ class AccountManager:
         end_date = dates["end_date"]      # "20250531"
         
         sms_accounts = self.db_manager.get_accounts_by_type("sms")
+        if company_name:
+            sms_accounts = [a for a in sms_accounts if a['company_name'] == company_name]
         results = []
         
         # 각 계정을 개별적으로 처리
@@ -215,9 +217,12 @@ def main():
         # DateConfig.set_dates("2025-05-01", "2025-05-31")
         # manager.call_data_workflow(download=True)
         
-        # 사용 예시 4: SMS 데이터 검색 + 다운로드
+        # 사용 예시 4: SMS 데이터 검색 + 다운로드 (특정 계정만)
         DateConfig.set_dates("2025-05-01", "2025-05-31")
-        manager.sms_data_workflow()
+        # 예시: "디싸이더스/애드프로젝트"만 테스트
+        manager.sms_data_workflow(company_name="디싸이더스/애드프로젝트")
+        # 전체 계정 테스트는 아래처럼 사용
+        # manager.sms_data_workflow()
         
     finally:
         manager.cleanup()
